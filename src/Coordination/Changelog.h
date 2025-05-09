@@ -5,6 +5,7 @@
 #include <Common/ConcurrentBoundedQueue.h>
 
 #include <map>
+#include <mutex>
 #include <variant>
 #include <unordered_map>
 #include <unordered_set>
