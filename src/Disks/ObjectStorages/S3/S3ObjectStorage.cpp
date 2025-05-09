@@ -243,8 +243,7 @@ void S3ObjectStorage::listObjects(const std::string & path, RelativePathsWithMet
 
     S3::ListObjectsV2Request request;
     request.SetBucket(uri.bucket);
-    if (path != "/")
-        request.SetPrefix(path);
+    request.SetPrefix(path);
     if (max_keys)
         request.SetMaxKeys(static_cast<int>(max_keys));
     else
@@ -276,7 +275,7 @@ void S3ObjectStorage::listObjects(const std::string & path, RelativePathsWithMet
 
         if (max_keys)
         {
-            size_t keys_left = max_keys - children.size();
+            ssize_t keys_left = static_cast<ssize_t>(max_keys) - children.size();
             if (keys_left <= 0)
                 break;
             request.SetMaxKeys(static_cast<int>(keys_left));
@@ -349,6 +348,7 @@ std::optional<ObjectMetadata> S3ObjectStorage::tryGetObjectMetadata(const std::s
     ObjectMetadata result;
     result.size_bytes = object_info.size;
     result.last_modified = Poco::Timestamp::fromEpochTime(object_info.last_modification_time);
+    result.etag = object_info.etag;
     result.attributes = object_info.metadata;
 
     return result;
@@ -390,7 +390,7 @@ void S3ObjectStorage::copyObjectToAnotherObjectStorage( // NOLINT
     {
         auto current_client = dest_s3->client.get();
         auto settings_ptr = s3_settings.get();
-        auto size = S3::getObjectSize(*current_client, uri.bucket, object_from.remote_path, {});
+        auto size = S3::getObjectSize(*client.get(), uri.bucket, object_from.remote_path, {});
         auto scheduler = threadPoolCallbackRunnerUnsafe<void>(getThreadPoolWriter(), "S3ObjStor_copy");
         const auto read_settings_to_use = patchSettings(read_settings);
 
@@ -528,6 +528,11 @@ ObjectStorageKey S3ObjectStorage::generateObjectKeyForPath(const std::string & p
         throw Exception(ErrorCodes::LOGICAL_ERROR, "Key generator is not set");
 
     return key_generator->generate(path, /* is_directory */ false, key_prefix);
+}
+
+bool S3ObjectStorage::areObjectKeysRandom() const
+{
+    return key_generator->isRandom();
 }
 
 std::shared_ptr<const S3::Client> S3ObjectStorage::getS3StorageClient()

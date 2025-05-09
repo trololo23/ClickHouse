@@ -122,7 +122,7 @@ public:
         callback(column_holder);
     }
 
-    void forEachSubcolumn(IColumn::MutableColumnCallback callback) override
+    void forEachMutableSubcolumn(IColumn::MutableColumnCallback callback) override
     {
         callback(column_holder);
         reverse_index.setColumn(getRawColumnPtr());
@@ -136,10 +136,10 @@ public:
         column_holder->forEachSubcolumnRecursively(callback);
     }
 
-    void forEachSubcolumnRecursively(IColumn::RecursiveMutableColumnCallback callback) override
+    void forEachMutableSubcolumnRecursively(IColumn::RecursiveMutableColumnCallback callback) override
     {
         callback(*column_holder);
-        column_holder->forEachSubcolumnRecursively(callback);
+        column_holder->forEachMutableSubcolumnRecursively(callback);
         reverse_index.setColumn(getRawColumnPtr());
         if (is_nullable)
             nested_column_nullable = ColumnNullable::create(column_holder, nested_null_mask);
@@ -740,6 +740,7 @@ extern template class ColumnUnique<ColumnFloat64>;
 extern template class ColumnUnique<ColumnString>;
 extern template class ColumnUnique<ColumnFixedString>;
 extern template class ColumnUnique<ColumnDateTime64>;
+extern template class ColumnUnique<ColumnTime64>;
 extern template class ColumnUnique<ColumnIPv4>;
 extern template class ColumnUnique<ColumnIPv6>;
 extern template class ColumnUnique<ColumnUUID>;
